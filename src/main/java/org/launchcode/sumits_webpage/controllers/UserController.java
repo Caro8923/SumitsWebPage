@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import org.launchcode.sumits_webpage.data.UserRepository;
 import org.launchcode.sumits_webpage.models.User;
 import org.launchcode.sumits_webpage.models.dto.LoginFormDTO;
+import org.launchcode.sumits_webpage.models.dto.RegisterFormDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
@@ -78,4 +79,38 @@ public class UserController {
 
         return "redirect:/user/index";
     }
+
+    @GetMapping("/user/register")
+    public String displayRegistrationForm(Model model) {
+        model.addAttribute(new RegisterFormDTO());
+        return "user/register";
+    }
+
+    @PostMapping("/user/register")
+    public String processRegistrationForm(@ModelAttribute @Valid RegisterFormDTO registerFormDTO,
+                                          Errors errors, HttpServletRequest request,
+                                          Model model) {
+
+        if (errors.hasErrors()) {
+            return "user/register";
+        }
+
+        User existingUser = userRepository.findByUsername(registerFormDTO.getUsername());
+
+        if (existingUser != null) {
+            errors.rejectValue("username", "username.alreadyexists", "A user with that username already exists");
+            return "user/register";
+        }
+
+        String password = registerFormDTO.getPassword();
+        String verifyPassword = registerFormDTO.getVerifyPassword();
+        if (!password.equals(verifyPassword)) {
+            errors.rejectValue("password", "passwords.mismatch", "Passwords do not match");
+            return "user/register";
+        }
+
+        return "redirect:/user/profile";
+    }
+
+
 }
